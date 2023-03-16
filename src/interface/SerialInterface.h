@@ -11,7 +11,7 @@
 
 typedef enum
 {
-    IF_SERIAL = 0, IF_ETHERNET
+    IF_SERIAL = 0, IF_ETHERNET, IF_SERIAL_OVER_IP
 } Interface_e;
 
 
@@ -20,6 +20,7 @@ void SerialIf_DeInit();
 
 bool SerialIf_OpenSerial(int protocol, QString portname, qint32 baud);
 bool SerialIf_OpenEth(QString ip, qint32 port);
+bool SerialIf_OpenSerialOverIP(QString ip, qint32 port);
 
 void SerialIf_Close();
 bool SerialIf_IsOpen();

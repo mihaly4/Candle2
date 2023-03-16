@@ -134,7 +134,7 @@ frmMain::frmMain(QWidget *parent) :
     // Get available Com Ports
     UpdateComPorts();
 
-    if(ui->comboInterface->currentText() == "ETHERNET")
+    if(ui->comboInterface->currentText() == "ETHERNET" || ui->comboInterface->currentText() == "SERIAL OVER IP")
     {
         ui->comboBaud->setEnabled(false);
     }
@@ -376,6 +376,7 @@ void frmMain::UpdateComPorts()
     }
     // Add Ethernet option
     ui->comboInterface->addItem("ETHERNET");
+    ui->comboInterface->addItem("SERIAL OVER IP");
 
     // Clear baud rates
     ui->comboBaud->clear();
@@ -474,7 +475,7 @@ void frmMain::updateControlsState()
     // Disable interface options (shouldn't be changed while open)
     ui->comboProtocol->setEnabled(!portOpened);
     ui->comboInterface->setEnabled(!portOpened);
-    ui->comboBaud->setEnabled(!portOpened && ui->comboInterface->currentText() != "ETHERNET");
+    ui->comboBaud->setEnabled(!portOpened && ui->comboInterface->currentText() != "ETHERNET" && ui->comboInterface->currentText() != "SERIAL OVER IP");
     ui->btnReload->setEnabled(!portOpened);
 
     // Enable rest of gui
@@ -624,7 +625,7 @@ void frmMain::GrblReset()
     // Reset: 0x18
     if(m_Protocol == PROT_GRBL1_1)
     {
-        SerialIf_Write(QByteArray(1, (char)0x18));
+        SerialIf_Write(QByteArray(1, (char)0x18) + (ui->comboInterface->currentText() == "SERIAL OVER IP" ? "\n": ""));
     }
     else if(m_Protocol == PROT_GRIP)
     {
@@ -2038,7 +2039,29 @@ void frmMain::on_btnConnect_clicked()
         }
 
         QString serial_interface = ui->comboInterface->currentText();
-        if(serial_interface != "ETHERNET")
+        if (serial_interface == "SERIAL OVER IP")
+        {
+            // Open serial over IP interface
+            if(SerialIf_OpenSerialOverIP(m_settings->IPAddress(), 30501))
+            {
+                ui->txtStatus->setText(tr("Port opened"));
+                ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
+#ifndef WINDOWS
+                SerialIf_Clear();
+#endif
+                qDebug() << "Serial OK";
+
+                m_timerRead.start(ReceiveTimerInterval_ms);
+
+                GrblReset();
+            }
+            else
+            {
+                ui->txtConsole->appendPlainText(tr("Serial port error: ") + SerialIf_GetError());
+                qDebug() << "Coultdn't open serial port";
+            }
+        }
+        else if(serial_interface != "ETHERNET")
         {
             // Open serial interface
             if(SerialIf_OpenSerial(0, ui->comboInterface->currentText(), ui->comboBaud->currentText().toInt()))
@@ -2059,7 +2082,7 @@ void frmMain::on_btnConnect_clicked()
                 ui->txtConsole->appendPlainText(tr("Serial port error: ") + SerialIf_GetError());
                 qDebug() << "Coultdn't open serial port";
             }
-        }
+        }        
         else
         {
             // Ethernet
@@ -2123,6 +2146,11 @@ void frmMain::on_btnConnect_clicked()
         // Only GrIP
         ui->comboProtocol->setCurrentIndex(1);
     }
+    else if(ui->comboInterface->currentText() == "SERIAL OVER IP")
+    {
+        // Only GrIP
+        ui->comboProtocol->setCurrentIndex(0);
+    }
 }
 
 void frmMain::on_comboInterface_currentTextChanged(const QString &arg1)
@@ -2133,6 +2161,13 @@ void frmMain::on_comboInterface_currentTextChanged(const QString &arg1)
         ui->comboBaud->setEnabled(false);
         // Only GrIP
         ui->comboProtocol->setCurrentIndex(1);
+    }
+    else if(arg1 == "SERIAL OVER IP")
+    {
+        ui->comboProtocol->setEnabled(false);
+        ui->comboBaud->setEnabled(false);
+        // Only GrIP
+        ui->comboProtocol->setCurrentIndex(0);
     }
     else    // Serial port
     {

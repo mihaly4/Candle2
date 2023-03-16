@@ -88,7 +88,7 @@ bool SerialIf_IsOpen()
     {
         return m_serialPort.isOpen();
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         return m_SocketOpen;
     }
@@ -107,7 +107,7 @@ QString SerialIf_GetError()
     {
         return m_serialPort.errorString();
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         return m_tcpSocket.errorString();
     }
@@ -121,7 +121,7 @@ qint64 SerialIf_Write(const QByteArray &data)
     {
         return m_serialPort.write(data);
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         /*if(m_tcpSocket.state() != QTcpSocket::ConnectedState)
         {
@@ -157,7 +157,7 @@ bool SerialIf_CanReadLine()
     {
         return m_serialPort.canReadLine();
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         return m_tcpSocket.canReadLine();
     }
@@ -172,7 +172,7 @@ qint64 SerialIf_IsDataAvailable()
     {
         return m_serialPort.bytesAvailable();
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         return m_tcpSocket.bytesAvailable();
     }
@@ -187,7 +187,7 @@ QByteArray SerialIf_ReadLine()
     {
         return m_serialPort.readLine();
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         return m_tcpSocket.readLine();
     }
@@ -202,11 +202,30 @@ qint64 SerialIf_Read(quint8 *data, qint64 max)
     {
         return m_serialPort.read((char*)data, max);
     }
-    else if(m_Interface == IF_ETHERNET)
+    else if(m_Interface == IF_ETHERNET || m_Interface == IF_SERIAL_OVER_IP)
     {
         return m_tcpSocket.read((char*)data, max);
     }
 
     // Return empty array
     return 0;
+}
+
+bool SerialIf_OpenSerialOverIP(QString ip, qint32 port)
+{
+    m_Interface = IF_SERIAL_OVER_IP;
+    if(m_tcpSocket.isOpen())
+    {
+        // Close if already open
+        m_tcpSocket.close();
+    }
+
+    m_ip = ip;
+    m_port = port;
+
+    m_tcpSocket.connectToHost(ip, port);
+
+    m_SocketOpen = m_tcpSocket.waitForConnected(3000);
+
+    return m_SocketOpen;
 }
