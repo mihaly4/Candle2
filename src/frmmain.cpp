@@ -2042,7 +2042,7 @@ void frmMain::on_btnConnect_clicked()
         if (serial_interface == "SERIAL OVER IP")
         {
             // Open serial over IP interface
-            if(SerialIf_OpenSerialOverIP(m_settings->IPAddress(), 30501))
+            if(SerialIf_OpenSerialOverIP(m_settings->IPAddress(), 8080))
             {
                 ui->txtStatus->setText(tr("Port opened"));
                 ui->txtStatus->setStyleSheet(QString("background-color: palette(button); color: palette(text);"));
