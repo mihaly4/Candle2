@@ -1735,8 +1735,8 @@ bool frmMain::DataIsReset(QString data)
 {
     //return QRegExp("^GRBL\\s\\d\\.\\d").indexIn(data.toUpper()) != -1;
     QString g("GRBL 1.1");
-
-    return data.toUpper().contains(g);
+    QString g3("GRBL 3.7");
+    return data.toUpper().contains(g) || data.toUpper().contains(g3);
 }
 
 QString frmMain::FeedOverride(QString command)
